@@ -4,6 +4,8 @@ const { checkSchema, validationResult } = require('express-validator')
 const app = express()
 const port = 3066
 
+app.use(express.json())
+
 connect('mongodb://127.0.0.1:27017/task-management-app')
     .then(() => {
         console.log('task app connected to db')
@@ -35,17 +37,20 @@ const taskSchemaValidation = {
         },
         custom: {
             options: function (value) {
-                Task.findOne({ title: value })
+                return Task.findOne({ title: value })
                     .then((task) => {
                         if (task) {
-                            throw new Error('title already exists')
+                            throw new Error('title already exists');
                         } else {
-                            return true
+                            return true;
                         }
                     })
-                    .catch()
+                    .catch((err) => {
+                        throw new Error(`Internal Server Error: ${err.message}`);
+                    });
             }
         }
+        
     },
 
     description: {
@@ -77,6 +82,21 @@ const taskSchemaValidation = {
     }
 }
 
+app.post('/tasks', checkSchema(taskSchemaValidation), (req, res) => {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() })
+    }
+
+    const body = req.body
+    Task.create(body)
+        .then((task) => {
+            res.status(201).json(task)
+        })
+        .catch((err) => {
+            res.status(500).json({ error: 'Internal Server Error' })
+        })
+})
 
 app.listen(port, () => {
     console.log(`server is running on ${port}`)
