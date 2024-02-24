@@ -84,7 +84,7 @@ const taskValidationSchema = {
 
 const idValidationSchema = {
     id: {
-        in: ['[params'],
+        in: ['params'],
         isMongoId: {
             errorMessage: 'Id Should be a valid Mongo Id'
         }
@@ -184,7 +184,7 @@ app.get('/tasks/:id', checkSchema(idValidationSchema), (req, res) => {
 app.put('/tasks/:id', checkSchema(updateValidationSchema), (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
-        res.status(400).json({ errors: errors.array() })
+       return res.status(400).json({ errors: errors.array() })
     }
 
     const id = req.params.id
@@ -192,9 +192,9 @@ app.put('/tasks/:id', checkSchema(updateValidationSchema), (req, res) => {
     Task.findByIdAndUpdate(id, body, { new: true })
         .then((task) => {
             if (!task) {
-                return res.status(400).json({})
+                 res.status(400).json({})
             } else {
-                return res.status(201).json(task)
+                 res.status(201).json(task)
             }
         })
         .catch((err) => {
@@ -202,7 +202,24 @@ app.put('/tasks/:id', checkSchema(updateValidationSchema), (req, res) => {
         })
 })
 
-
+app.delete('/tasks/:id', checkSchema(idValidationSchema), (req, res) => {
+    const errors = validationResult(req)
+    if (!errors.isEmpty) {
+        return res.status(400).json({ errors: errors.array() })
+    }
+    const id = req.params.id
+    Task.findByIdAndDelete(id)
+    .then((task)=>{
+        if(!task){
+            res.status(400).json({})
+        }else{
+            res.status(201).json(task)
+        }
+    })
+    .catch((err)=>{
+        res.status(400).json({errors: 'Internal Server Error'})
+    })
+})
 
 
 
