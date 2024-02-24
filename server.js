@@ -50,7 +50,7 @@ const taskSchemaValidation = {
                     });
             }
         }
-        
+
     },
 
     description: {
@@ -82,6 +82,15 @@ const taskSchemaValidation = {
     }
 }
 
+const idValidationSchema = {
+    id: {
+        in: ['[params'],
+        isMongoId: {
+            errorMessage: 'Id Should be a valid Mongo Id'
+        }
+    }
+}
+
 app.post('/tasks', checkSchema(taskSchemaValidation), (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
@@ -95,6 +104,36 @@ app.post('/tasks', checkSchema(taskSchemaValidation), (req, res) => {
         })
         .catch((err) => {
             res.status(500).json({ error: 'Internal Server Error' })
+        })
+})
+
+app.get('/tasks', (req, res) => {
+    Task.find()
+        .then((task) => {
+            res.status(201).json(task)
+        })
+        .catch((err) => {
+            res.status(500).json({ error: 'Internal Server Error' })
+        })
+})
+
+app.get('/tasks/:id', checkSchema(idValidationSchema), (req, res) => {
+    const errors = validationResult(req)
+    if (!errors.isEmpty) {
+        return res.status(400).json({ errors: errors.array() })
+    }
+
+    const id = req.params.id
+    Task.findById(id)
+        .then((task) => {
+            if (!task) {
+                res.status(404).json({})
+            } else {
+                res.status(201).json(task)
+            }
+        })
+        .catch((err)=>{
+            res.status(500).json({error: 'Internal Server Error'})
         })
 })
 
