@@ -163,7 +163,7 @@ app.get('/tasks', (req, res) => {
 
 app.get('/tasks/:id', checkSchema(idValidationSchema), (req, res) => {
     const errors = validationResult(req)
-    if (!errors.isEmpty) {
+    if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() })
     }
 
@@ -192,32 +192,32 @@ app.put('/tasks/:id', checkSchema(updateValidationSchema), (req, res) => {
     Task.findByIdAndUpdate(id, body, { new: true })
         .then((task) => {
             if (!task) {
-                 res.status(400).json({})
+                 res.status(404).json({})
             } else {
                  res.status(201).json(task)
             }
         })
         .catch((err) => {
-            res.status(400).json({ errors: 'Internal Server Error' })
+            res.status(500).json({ errors: 'Internal Server Error' })
         })
 })
 
 app.delete('/tasks/:id', checkSchema(idValidationSchema), (req, res) => {
     const errors = validationResult(req)
-    if (!errors.isEmpty) {
+    if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() })
     }
     const id = req.params.id
     Task.findByIdAndDelete(id)
     .then((task)=>{
         if(!task){
-            res.status(400).json({})
+            res.status(404).json({})
         }else{
-            res.status(201).json(task)
+            res.status(204).json(task)
         }
     })
     .catch((err)=>{
-        res.status(400).json({errors: 'Internal Server Error'})
+        res.status(500).json({errors: 'Internal Server Error'})
     })
 })
 
