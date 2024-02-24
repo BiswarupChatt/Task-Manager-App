@@ -22,7 +22,7 @@ const taskSchema = new Schema({
 
 const Task = model('Task', taskSchema)
 
-const taskSchemaValidation = {
+const taskValidationSchema = {
     title: {
         in: ['body'],
         notEmpty: {
@@ -91,7 +91,51 @@ const idValidationSchema = {
     }
 }
 
-app.post('/tasks', checkSchema(taskSchemaValidation), (req, res) => {
+const updateValidationSchema = {
+    title: {
+        in: ['body'],
+        notEmpty: {
+            errorMessage: 'Title cannot be empty'
+        },
+        exists: {
+            errorMessage: 'Title is required'
+        },
+        isLength: {
+            options: { min: 5 },
+            errorMessage: 'title should be at least 5 character'
+        }
+    },
+
+    description: {
+        in: ['body'],
+        notEmpty: {
+            errorMessage: 'Description cannot be empty'
+        },
+        exists: {
+            errorMessage: 'Description is required'
+        },
+        isLength: {
+            options: { min: 5 },
+            errorMessage: 'Description should be at least 5 character'
+        }
+    },
+
+    status: {
+        in: ['body'],
+        notEmpty: {
+            errorMessage: 'Status cannot be empty'
+        },
+        exists: {
+            errorMessage: 'Status is required'
+        },
+        isIn: {
+            options: [['pending', 'in progress', 'completed']],
+            errorMessage: 'status should be one of (pending, in progress, completed)'
+        }
+    }
+}
+
+app.post('/tasks', checkSchema(taskValidationSchema), (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() })
@@ -132,10 +176,35 @@ app.get('/tasks/:id', checkSchema(idValidationSchema), (req, res) => {
                 res.status(201).json(task)
             }
         })
-        .catch((err)=>{
-            res.status(500).json({error: 'Internal Server Error'})
+        .catch((err) => {
+            res.status(500).json({ error: 'Internal Server Error' })
         })
 })
+
+app.put('/tasks/:id', checkSchema(updateValidationSchema), (req, res) => {
+    const errors = validationResult(req)
+    if (!errors.isEmpty) {
+        res.status(400).json({ errors: errors.array() })
+    }
+
+    const id = req.params.id
+    const body = req.body
+    Task.findByIdAndUpdate(id, body, { new: true })
+        .then((task) => {
+            if (!task) {
+                return res.status(400).json({})
+            } else {
+                return res.status(201).json(task)
+            }
+        })
+        .catch((err) => {
+            res.status(400).json({ errors: 'Internal Server Error' })
+        })
+})
+
+
+
+
 
 app.listen(port, () => {
     console.log(`server is running on ${port}`)
