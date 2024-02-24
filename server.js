@@ -183,7 +183,7 @@ app.get('/tasks/:id', checkSchema(idValidationSchema), (req, res) => {
 
 app.put('/tasks/:id', checkSchema(updateValidationSchema), (req, res) => {
     const errors = validationResult(req)
-    if (!errors.isEmpty) {
+    if (!errors.isEmpty()) {
         res.status(400).json({ errors: errors.array() })
     }
 
